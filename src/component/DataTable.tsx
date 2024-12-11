@@ -219,12 +219,24 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
   
   
   const handleDelete = async(empId: number) => {
-    try {
-      const res = await deleteEmployee(user, pass, empId);
-      onChange();
-    } catch (error) {
-      console.error("Lỗi:", error);
-    }  
+    if(deptName === "HR"){
+      try {
+        const res = await deleteEmployee(user, pass, empId);
+        onChange();
+      } catch (error: any) {
+        const errorMessage = error.message || "Đã có lỗi xảy ra!";
+        messageApi.error({
+          content: errorMessage,
+          className: "custom-message", 
+        });
+      }  
+    }
+    else{
+        messageApi.error({
+        content: "Bạn không được phép delete!",
+        className: "custom-message",
+      });
+    }
   };
 
 
