@@ -31,7 +31,10 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
   const dataWithKeys = data.map((item) => ({ ...item, key: item.EMP_ID.toString() }));
   const [messageApi, contextHolder] = message.useMessage();
   
-  const storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
+  let storedUser: any = {};
+if (typeof window !== "undefined" && sessionStorage) {
+  storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
+}
   const user = storedUser.username;
   const pass = storedUser.password;
   const deptName = storedUser.dept_name;
@@ -50,43 +53,43 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
       title: "Name",
       dataIndex: "EMP_NAME",
       key: "EMP_NAME",
-      render: (text: string) => (text ? text : "NULL"),
+      render: (text: string) => (text ? text : ""),
     },
     {
       title: "Birth Date",
       dataIndex: "BIRTH_DATE",
       key: "BIRTH_DATE",
-      render: (text: string) => (text ? new Date(text).toLocaleDateString() : "NULL"),
+      render: (text: string) => (text ? new Date(text).toLocaleDateString() : ""),
     },
     {
       title: "Department ID",
       dataIndex: "DEPT_ID",
       key: "DEPT_ID",
-      render: (text: string) => (text ? text : "NULL"),
+      render: (text: string) => (text ? text : ""),
     },
     {
       title: "Email",
       dataIndex: "EMAIL",
       key: "EMAIL",
-      render: (text: string) => (text ? text : "NULL"),
+      render: (text: string) => (text ? text : ""),
     },
     {
       title: "Salary",
       dataIndex: "SALARY",
       key: "SALARY",
-      render: (text: number) => (text ? text : "NULL"),
+      render: (text: number) => (text ? text : ""),
     },
     {
       title: "Tax Code",
       dataIndex: "TAX_CODE",
       key: "TAX_CODE",
-      render: (text: string) => (text ? text : "NULL"),
+      render: (text: string) => (text ? text : ""),
     },
     {
       title: "Manager ID",
       dataIndex: "MANAGER_ID",
       key: "MANAGER_ID",
-      render: (text: number | null) => (text !== null ? text : "NULL"),
+      render: (text: number | null) => (text !== null ? text : ""),
     },
     {
       title: <p style={{textAlign:"center"}}>Action</p>,
@@ -109,15 +112,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
   ];
 
   const onInsert = () => {
-    if(deptName === "HR"){
-      setModalInsert(true)
-    }
-    else{
-      messageApi.error({
-      content: "Bạn không được phép insert!",
-      className: "custom-message",
-    });
-    }
+    setModalInsert(true)
   }
 
   const options = [
@@ -129,9 +124,8 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
   
 
   const onUpdate = (record:any) => {
-    console.log(record);
+    //console.log(record);
     const department = options.find((option) => option.value === String(record.DEPT_ID));
-    if(deptName === "HR"){
       setModalEdit(true)
       form1.setFieldsValue({
         empname: record.EMP_NAME,
@@ -141,13 +135,6 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
         taxcode: record.TAX_CODE,
         deptid: department?.value,
       });
-    }
-    else{
-      messageApi.error({
-      content: "Bạn không được phép update!",
-      className: "custom-message",
-    });
-    }
   }
   
 
@@ -166,7 +153,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
       setModalInsert(false);
       onChange();
     }catch (error: any) {
-      const errorMessage = error.message || "Đã có lỗi xảy ra!";
+      const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
       messageApi.error({
         content: errorMessage,
         className: "custom-message", 
@@ -208,35 +195,32 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
       setModalEdit(false);
       onChange();
     }catch (error: any) {
-      const errorMessage = error.message || "Đã có lỗi xảy ra!";
-      messageApi.error({
-        content: errorMessage,
-        className: "custom-message", 
-      });
-      console.log("Sửa thất bại!")
+      // const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
+      // messageApi.error({
+      //   content: errorMessage,
+      //   className: "custom-message", 
+      // });
+      console.log(error)
     }
   };
   
   
   const handleDelete = async(empId: number) => {
-    if(deptName === "HR"){
-      try {
-        const res = await deleteEmployee(user, pass, empId);
-        onChange();
-      } catch (error: any) {
-        const errorMessage = error.message || "Đã có lỗi xảy ra!";
-        messageApi.error({
-          content: errorMessage,
-          className: "custom-message", 
-        });
-      }  
-    }
-    else{
-        messageApi.error({
-        content: "Bạn không được phép delete!",
-        className: "custom-message",
+    try {
+      const res = await deleteEmployee(user, pass, empId);
+      onChange();
+      messageApi.success({
+        content: "Xóa thành công!",
+        className: 'custom-message', 
       });
-    }
+    } catch (error: any) {
+      const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
+      messageApi.error({
+        content: errorMessage,
+        className: "custom-message", 
+      });
+      console.log(error);
+    }  
   };
 
 
@@ -253,7 +237,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
         dataSource={dataWithKeys}
         pagination={{
           position: ["bottomCenter"],
-          pageSize: 5,
+          pageSize: 7,
         }}
         style={{textAlign:"center"}}
       />
@@ -268,56 +252,59 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
         
       >
         <Form form={form} onFinish={handleInsert} style={{marginTop:"30px"}}>
-          <Col span={24}>
+        <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
+          <Col span={11}>
             <p style={{fontSize:"15px", marginBottom:'10px'}}>*Tên nhân viên</p>
             <Form.Item name="empname" rules={[{ required: true, message: "Nhập tên danh mục" }]}>
               <Input size="large" placeholder="Nhập tên nhân viên" />
             </Form.Item>
           </Col>
-          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
-            <Col span={11}>
+          <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Ngày sinh</p>
               <Form.Item name="birthdate" rules={[{ required: true, message: "Chọn ngày sinh" }]}>
                 <DatePicker placeholder="DD/MM/YYYY" style={{ width: "100%" }} size="large" format="DD/MM/YYYY" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+        </Col>
+          
+          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
+            
+            <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Email</p>
               <Form.Item name="email" rules={[{ required: true, message: "Nhập email" }]}>
                 <Input size="large" placeholder="abc@gmail.com" />
               </Form.Item>
             </Col>
-          </Col>
-          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
-            <Col span={11}>
+            <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Lương</p>
               <Form.Item name="salary" rules={[{ required: true, message: "Nhập lương" }]}>
                 <Input size="large" placeholder="3000$" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Col>
+          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
+            
+            <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Tax code</p>
               <Form.Item name="taxcode" rules={[{ required: true, message: "Nhập tax code" }]}>
                 <Input size="large" placeholder="TX0" />
               </Form.Item>
             </Col>
-          </Col>
-          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
-            <Col span={11}>
+            <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Username</p>
               <Form.Item name="username" rules={[{ required: true, message: "Nhập username" }]}>
                 <Input size="large" placeholder="abc" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Col>
+          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>   
+            <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Password</p>
               <Form.Item name="password" rules={[{ required: true, message: "Nhập mật khẩu" }]}>
                 <Input type="password" size="large" placeholder="*******" />
               </Form.Item>
             </Col>
-          </Col>
-          <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
-            <Col span={11}>
+            <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Phòng ban</p>
               <Form.Item name="deptid" rules={[{ required: true, message: "Chọn phòng ban" }]}>
                 <Select options={[
@@ -327,18 +314,6 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
                 ]}
                 size="large"
                 placeholder="" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <p style={{fontSize:"15px", marginBottom:'10px'}}>*Manager ID</p>
-              <Form.Item name="managerid" rules={[{ required: true, message: "Chọn manager ID" }]}>
-                <Select options={[
-                    { value: '1', label: 'HR' },
-                    { value: '2', label: 'Accounting' },
-                    { value: '3', label: 'IT' },
-                  ]}
-                  size="large" 
-                  placeholder="" />
               </Form.Item>
             </Col>
           </Col>
@@ -360,13 +335,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
           <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>
             <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Tên nhân viên</p>
-              <Form.Item name="empname" rules={[{ required: true, message: "Nhập tên danh mục" }]}>
+              <Form.Item name="empname">
                 <Input size="large" placeholder="Nhập tên nhân viên" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Ngày sinh</p>
-              <Form.Item name="birthdate" rules={[{ required: true, message: "Chọn ngày sinh" }]}>
+              <Form.Item name="birthdate">
                 <DatePicker placeholder="DD/MM/YYYY" style={{ width: "100%" }} size="large" format="DD/MM/YYYY" />
               </Form.Item>
             </Col>
@@ -374,13 +349,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
           <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>        
             <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Email</p>
-              <Form.Item name="email" rules={[{ required: true, message: "Nhập email" }]}>
+              <Form.Item name="email">
                 <Input size="large" placeholder="abc@gmail.com" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Lương</p>
-              <Form.Item name="salary" rules={[{ required: true, message: "Nhập lương" }]}>
+              <Form.Item name="salary" >
                 <Input size="large" placeholder="3000$" />
               </Form.Item>
             </Col>
@@ -388,13 +363,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
           <Col style={{display:"flex", justifyContent:'space-between'}} span={24}>        
             <Col span={11}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Tax code</p>
-              <Form.Item name="taxcode" rules={[{ required: true, message: "Nhập tax code" }]}>
+              <Form.Item name="taxcode" >
                 <Input size="large" placeholder="TX0" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <p style={{fontSize:"15px", marginBottom:'10px'}}>*Phòng ban</p>
-              <Form.Item name="deptid" rules={[{ required: true, message: "Chọn phòng ban" }]}>
+              <Form.Item name="deptid" >
                 <Select options={[
                   { value: '1', label: 'HR' },
                   { value: '2', label: 'Accounting' },

@@ -11,7 +11,7 @@ const page = () => {
 
 
   const [dataEmployee, setDataEmployee] = useState<Employee[]>([]);
-  const user = localStorage.getItem("user");
+  //const user = localStorage.getItem("user");
   
   const fetchApiData = async () => {
     const storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
