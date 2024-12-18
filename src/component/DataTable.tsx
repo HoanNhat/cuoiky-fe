@@ -1,11 +1,13 @@
 "use client";
 
 import { deleteEmployee, insert, update } from "@/api/API";
-import { Button, Col, DatePicker, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag } from "antd";
+import { Button, Col, DatePicker, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip } from "antd";
 import type { TableProps } from "antd";
 import Password from "antd/es/input/Password";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {EyeInvisibleOutlined} from "@ant-design/icons";
 
 type ColumnsType<T extends object> = TableProps<T>["columns"];
 
@@ -32,12 +34,12 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onChange }) => {
   const [messageApi, contextHolder] = message.useMessage();
   
   let storedUser: any = {};
-if (typeof window !== "undefined" && sessionStorage) {
-  storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
-}
+  if (typeof window !== "undefined" && sessionStorage) {
+    storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
+  }
   const user = storedUser.username;
   const pass = storedUser.password;
-  const deptName = storedUser.dept_name;
+  const deptName = storedUser.dept_name || "";
   const [form] = Form.useForm();
   const [form1] = Form.useForm();
   const [id, setID] = useState(0);
@@ -153,7 +155,7 @@ if (typeof window !== "undefined" && sessionStorage) {
       setModalInsert(false);
       onChange();
     }catch (error: any) {
-      const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
+      const errorMessage = error?.response?.data?.error || "You don't have permission to insert";
       messageApi.error({
         content: errorMessage,
         className: "custom-message", 
@@ -195,11 +197,11 @@ if (typeof window !== "undefined" && sessionStorage) {
       setModalEdit(false);
       onChange();
     }catch (error: any) {
-      // const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
-      // messageApi.error({
-      //   content: errorMessage,
-      //   className: "custom-message", 
-      // });
+      const errorMessage = error?.response?.data?.error || "You don't have permission to update";
+      messageApi.error({
+        content: errorMessage,
+        className: "custom-message", 
+      });
       console.log(error)
     }
   };
@@ -214,7 +216,7 @@ if (typeof window !== "undefined" && sessionStorage) {
         className: 'custom-message', 
       });
     } catch (error: any) {
-      const errorMessage = error.response.data.error || "Đã có lỗi xảy ra!";
+      const errorMessage = error?.response?.data?.error || "You don't have permission to delete";
       messageApi.error({
         content: errorMessage,
         className: "custom-message", 
@@ -226,18 +228,22 @@ if (typeof window !== "undefined" && sessionStorage) {
 
   const [modalInsert, setModalInsert] = useState(false);
   const [modalEdit, setModalEdit] = useState(false);
+  const router = useRouter();
   return (
     <>
       {contextHolder}
-      <Button style={{marginBottom:"30px", marginLeft:"865px"}} type="primary" onClick={() => onInsert()}>
-        Thêm nhân viên mới
-      </Button>
+      <Col style={{display:"flex", justifyContent:'space-between'}}>
+        <Button style={{marginBottom:"30px", marginLeft:"865px"}} type="primary" onClick={() => onInsert()}>
+          Thêm nhân viên mới
+        </Button>
+        
+      </Col>
       <Table<Employee>
         columns={columns}
         dataSource={dataWithKeys}
         pagination={{
           position: ["bottomCenter"],
-          pageSize: 7,
+          pageSize: 5,
         }}
         style={{textAlign:"center"}}
       />

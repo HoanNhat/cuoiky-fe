@@ -39,3 +39,13 @@ export const deleteEmployee = async (username:any, password:any, empid:any) => {
     const res = await api.delete("/employees", { params: queryParams });
     return res.data;
 };
+
+export const getAudit = async (username:any, password:any) => {
+    const api = new BaseApi();
+    const queryParams = {
+        username,
+        password,
+    };
+    const res = await api.get("/audit", { params: queryParams });
+    return res.data;
+};

@@ -11,12 +11,13 @@ const page = () => {
 
 
   const [dataEmployee, setDataEmployee] = useState<Employee[]>([]);
-  //const user = localStorage.getItem("user");
+  const storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
+  const deptName = storedUser.dept_name || "";
+  const username = storedUser.username;
+  const pass = storedUser.password;
   
   const fetchApiData = async () => {
-    const storedUser = JSON.parse(sessionStorage.getItem("user") || '{}');
-    const username = storedUser.username;
-    const pass = storedUser.password;
+    
     try {
       const res = await getAllEmployees(username, pass);
       setDataEmployee(res)
@@ -46,7 +47,17 @@ const page = () => {
       >
         <Title level={2}>Employee</Title>
         <DataTable data={dataEmployee} onChange={fetchApiData}/>     
-        <Button onClick={handleLogout} type="primary" style={{marginTop:"30px"}}>Đăng xuất</Button>   
+        <div style={{display:"flex", justifyContent:"space-between"}}>
+          <Button style={{margin:"30px 0", marginRight:"870px"}} danger onClick={handleLogout} type="primary">Đăng xuất</Button>
+          <Button color="primary" variant="outlined" style={{margin:"30px 0"}} onClick={() => router.push("/audit")}>
+              Audit
+            </Button>   
+          {/* {deptName === "HR" && username === "ALICE" ?(
+            <Button color="primary" variant="outlined" style={{margin:"30px 0"}} onClick={() => router.push("/audit")}>
+              Audit
+            </Button>
+          ):(<></>)} */}
+        </div>
       </Flex>
   );
 };
